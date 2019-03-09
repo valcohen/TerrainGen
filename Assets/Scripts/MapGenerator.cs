@@ -8,6 +8,8 @@ public class MapGenerator : MonoBehaviour {
     public int mapHeight;
     public float noiseScale;    // TODO: "textureScale" for non-noise sources?
 
+    public bool autoUpdate;
+
     public void GenerateMap() {
         float[,] noiseMap = Noise.GenerateNoiseMap(mapWidth, mapHeight, noiseScale);
 
