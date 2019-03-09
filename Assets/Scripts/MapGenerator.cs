@@ -12,12 +12,15 @@ public class MapGenerator : MonoBehaviour {
     public float persistence;
     public float lacunarity;
 
+    public int seed;
+    public Vector2 offset;
+
     public bool autoUpdate;
 
     public void GenerateMap() {
         float[,] noiseMap = Noise.GenerateNoiseMap(
-            mapWidth, mapHeight, noiseScale,
-            octaves, persistence, lacunarity
+            mapWidth, mapHeight, seed, noiseScale,
+            octaves, persistence, lacunarity, offset
         );
 
         MapDisplay display = FindObjectOfType<MapDisplay>();
