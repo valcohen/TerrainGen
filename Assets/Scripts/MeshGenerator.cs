@@ -19,7 +19,7 @@ using UnityEngine;
  *         |_\ \|
  *      i+w   i+w+1  i+w+2...
  * 
- *      draw clockwise:
+ *      draw Δ clockwise:
  *      [i] Δ i, i+w+1, i+w  [i]__
  *        |\                    \ | 
  *        |_\                    \| Δ i+w+1, i, i+1
@@ -30,7 +30,8 @@ public static class MeshGenerator {
     public static MeshData GenerateTerrainMesh(
         float[,] heightMap,
         float heightMultiplier,
-        AnimationCurve heightCurve
+        AnimationCurve heightCurve,
+        int levelOfDetail   // higher is simpler
     ) {
         int width  = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
@@ -47,12 +48,16 @@ public static class MeshGenerator {
         float topLeftX = (width  - 1) / -2f;
         float topLeftZ = (height - 1) / +2f;
 
+        int meshSimplificationIncrement = levelOfDetail == 0
+                                        ? 1
+                                        : levelOfDetail * 2;
+        int verticesPerLine = (width - 1) / meshSimplificationIncrement + 1;
 
-        MeshData meshData = new MeshData(width, height);
+        MeshData meshData = new MeshData(verticesPerLine, verticesPerLine);
         int vertexIndex = 0;
 
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y += meshSimplificationIncrement) {
+            for (int x = 0; x < width; x += meshSimplificationIncrement) {
 
                 meshData.vertices[vertexIndex] = new Vector3(
                     topLeftX + x, 
@@ -67,15 +72,15 @@ public static class MeshGenerator {
                 // ignore right & bottom edges
                 if (x < (width - 1) && y < (height - 1) ) {
                     meshData.AddTriangle(
-                        vertexIndex,                //    i   
-                        vertexIndex + width + 1,    //     |\                
-                        vertexIndex + width         // i+w |_\ i+w+1             
+                        vertexIndex,                        //    i   
+                        vertexIndex + verticesPerLine + 1,  //     |\                
+                        vertexIndex + verticesPerLine       // i+w |_\ i+w+1             
                     );
                     // we can start 2nd tri at i instead of i+w+1
                     meshData.AddTriangle(
-                        vertexIndex,                //    i __  i+1
-                        vertexIndex + 1,            //      \ | 
-                        vertexIndex + width + 1     //       \| i+w+1
+                        vertexIndex,                        //    i __  i+1
+                        vertexIndex + 1,                    //      \ | 
+                        vertexIndex + verticesPerLine + 1   //       \| i+w+1
                     );
                 }
 
