@@ -7,8 +7,35 @@ public class MapGenerator : MonoBehaviour {
     public enum DrawMode { NoiseMap, ColorMap, Mesh };
     public DrawMode drawMode;
 
-    public int mapWidth;
-    public int mapHeight;
+    /*
+     * Set chunk width to support multiple mesh LOD 
+     * w = width, i = increment
+     *
+     * w = 9:  0  1  2  3  4  5  6  7  8
+     * i = 1:  *  *  *  *  *  *  *  *  *   8 vertices
+     * 1 = 2:  *     *     *     *     *   5
+     * 1 = 4:  *           *           *   3
+     *
+     * i = factor of (w-1)
+     * i = 1,2,4,8
+     *
+     * number of vertices per line:
+     *
+     *      (w-1) 
+     * v =  ----- + 1
+     *        i
+     *
+     * v = w * h            -- if i = 1, total verts v in mesh
+     * v <= 255^2 (65025)   -- unity limit on verts in a mesh
+     * w <= 255             -- msx width of square mesh
+     * 
+     * since i must be a factor of w-1, 
+     * w = 241
+     * w - 1 = 240  -- has factors of 2,4,6,8,10,12
+     */
+    const int mapChunkSize = 241;
+    [Range(0,6)]    // we'll multiply LOD by 2 to get increment - 2,4,6,..12
+    public int levelOfDetail;   // higher is simpler
     public float noiseScale;    // TODO: "textureScale" for non-noise sources?
 
     public int octaves;
@@ -19,23 +46,26 @@ public class MapGenerator : MonoBehaviour {
     public int seed;
     public Vector2 offset;
 
+    public float meshHeightMultiplier;
+    public AnimationCurve meshHeightCurve;
+
     public bool autoUpdate;
 
     public TerrainType[] regions;
 
     public void GenerateMap() {
         float[,] noiseMap = Noise.GenerateNoiseMap(
-            mapWidth, mapHeight, seed, noiseScale,
+            mapChunkSize, mapChunkSize, seed, noiseScale,
             octaves, persistence, lacunarity, offset
         );
 
-        Color[] colorMap = new Color[mapWidth * mapHeight];
-        for (int y = 0; y < mapHeight; y++) {
-            for (int x = 0; x < mapWidth; x++) {
+        Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
+        for (int y = 0; y < mapChunkSize; y++) {
+            for (int x = 0; x < mapChunkSize; x++) {
                 float currentHeight = noiseMap[x, y];
                 for (int i = 0; i < regions.Length; i++) {
                     if (currentHeight <= regions[i].height) {
-                        colorMap[y * mapWidth + x] = regions[i].color;
+                        colorMap[y * mapChunkSize + x] = regions[i].color;
                         break;
                     }
                 }
@@ -47,13 +77,16 @@ public class MapGenerator : MonoBehaviour {
             display.DrawTexture(TextureGenerator.TextureFromHeightMap(noiseMap));
         } else if (drawMode == DrawMode.ColorMap) {
             display.DrawTexture(TextureGenerator.TextureFromColorMap(
-                colorMap, mapWidth, mapHeight)
+                colorMap, mapChunkSize, mapChunkSize)
             );
         } else if (drawMode == DrawMode.Mesh) {
             display.DrawMesh(
-                MeshGenerator.GenerateTerrainMesh(noiseMap),
+                MeshGenerator.GenerateTerrainMesh(
+                    noiseMap, meshHeightMultiplier, 
+                    meshHeightCurve, levelOfDetail
+                ),
                 TextureGenerator.TextureFromColorMap(
-                    colorMap, mapWidth, mapHeight
+                    colorMap, mapChunkSize, mapChunkSize
                 )
             );
         }
@@ -61,8 +94,6 @@ public class MapGenerator : MonoBehaviour {
     }
 
     void OnValidate() {
-        if (mapWidth < 1)   { mapWidth      = 1; }
-        if (mapHeight < 1)  { mapHeight     = 1; }
         if (lacunarity < 1) { lacunarity    = 1; }
         if (octaves < 0)    { octaves       = 0; }
     }
