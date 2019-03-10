@@ -8,18 +8,18 @@ using UnityEngine;
  * 
  *      [0]  __[1]  __ 2          
  *        |\ \ | |\ \ |   # of verts = w * h
- *        | \ \| | \ \|   # of verts used by tris = (w-1)(h-1) * (2*3)
- *      [3]--__[4]--__ 5                 (2*3 = 2 tris * 3 verts each)
+ *        |_\ \| |_\ \|   # of verts used by tris = (w-1)(h-1) * (2*3)
+ *      [3]  __[4]  __ 5                 (2*3 = 2 tris * 3 verts each)
  *        |\ \ | |\ \ |
- *        | \ \| | \ \|     create tris only for [v] vertices, 
- *       6 --   7 --   8    not for right or bottom edges:
+ *        |_\ \| |_\ \|     create tris only for [v] vertices, 
+ *       6      7      8    not for right or bottom edges:
  * 
- *       i     _ i+1    i+2...
+ *        i   __ i+1    i+2...
  *         |\ \ |
  *         |_\ \|
  *      i+w   i+w+1  i+w+2...
  * 
- *      [i] i, i+w+1, i      [i]__
+ *      [i] i, i+w+1, i+w    [i]__
  *        |\                    \ | 
  *        |_\                    \| i+w+1, i, i+1
  */
@@ -32,15 +32,15 @@ public static class MeshGenerator {
 
         /*
          * center the mesh on the screen:
-         *   X   X   X
+         *   *   *   *
          *  -1   0   1
          * 
-         *      (width - 1)
-         *  x = -----------
-         *          -2
+         *      (width - 1)     (width - 1)
+         *  x = ----------- y = -----------
+         *          -2               2
          */
         float topLeftX = (width  - 1) / -2f;
-        float topLeftZ = (height - 1) / -2f;
+        float topLeftZ = (height - 1) / +2f;
 
 
         MeshData meshData = new MeshData(width, height);
