@@ -27,7 +27,11 @@ using UnityEngine;
 
 public static class MeshGenerator {
 
-    public static MeshData GenerateTerrainMesh(float[,] heightMap) {
+    public static MeshData GenerateTerrainMesh(
+        float[,] heightMap,
+        float heightMultiplier,
+        AnimationCurve heightCurve
+    ) {
         int width  = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
 
@@ -51,7 +55,9 @@ public static class MeshGenerator {
             for (int x = 0; x < width; x++) {
 
                 meshData.vertices[vertexIndex] = new Vector3(
-                    topLeftX + x, heightMap[x,y], topLeftZ - y
+                    topLeftX + x, 
+                    heightCurve.Evaluate(heightMap[x,y]) * heightMultiplier, 
+                    topLeftZ - y
                 );
                 meshData.uvs[vertexIndex] = new Vector2(
                     x / (float) width,
@@ -59,7 +65,7 @@ public static class MeshGenerator {
                 );  // normalize to 0..1
 
                 // ignore right & bottom edges
-                if (x < (width -1) && y < (height - 1) ) {
+                if (x < (width - 1) && y < (height - 1) ) {
                     meshData.AddTriangle(
                         vertexIndex,                //    i   
                         vertexIndex + width + 1,    //     |\                
