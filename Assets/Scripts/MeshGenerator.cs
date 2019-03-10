@@ -19,9 +19,10 @@ using UnityEngine;
  *         |_\ \|
  *      i+w   i+w+1  i+w+2...
  * 
- *      [i] i, i+w+1, i+w    [i]__
+ *      draw clockwise:
+ *      [i] Δ i, i+w+1, i+w  [i]__
  *        |\                    \ | 
- *        |_\                    \| i+w+1, i, i+1
+ *        |_\                    \| Δ i+w+1, i, i+1
  */
 
 public static class MeshGenerator {
@@ -60,15 +61,15 @@ public static class MeshGenerator {
                 // ignore right & bottom edges
                 if (x < (width -1) && y < (height - 1) ) {
                     meshData.AddTriangle(
-                        vertexIndex, 
-                        vertexIndex + width + 1,
-                        vertexIndex + width
+                        vertexIndex,                //    i   
+                        vertexIndex + width + 1,    //     |\                
+                        vertexIndex + width         // i+w |_\ i+w+1             
                     );
-                    // TODO: what if we start at i instead of i+w+1?
+                    // we can start 2nd tri at i instead of i+w+1
                     meshData.AddTriangle(
-                        vertexIndex + width + 1,
-                        vertexIndex,
-                        vertexIndex + 1
+                        vertexIndex,                //    i __  i+1
+                        vertexIndex + 1,            //      \ | 
+                        vertexIndex + width + 1     //       \| i+w+1
                     );
                 }
 
