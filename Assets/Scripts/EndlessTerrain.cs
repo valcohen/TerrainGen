@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class EndlessTerrain : MonoBehaviour {
 
+    const float viewerMoveThresholdForChunkUpdate = 25f;
+    const float sqrViewerMoveThresholdForChunkUpdate = 
+        viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
+
     public LODInfo[] detailLevels;
     public static float maxViewDistance;
 
@@ -11,6 +15,7 @@ public class EndlessTerrain : MonoBehaviour {
     public Material meshMaterial;
 
     public static Vector2 viewerPos;
+    Vector2 viewerPosOld;
     static MapGenerator mapGenerator;
     int chunkSize;
     int chunksVisibleInViewDistance;
@@ -27,11 +32,19 @@ public class EndlessTerrain : MonoBehaviour {
         chunksVisibleInViewDistance = Mathf.RoundToInt(
             maxViewDistance / chunkSize
         );
+
+        updateVisibleChunks();
     }
 
     void Update() {
         viewerPos = new Vector2(viewer.position.x, viewer.position.z);
-        updateVisibleChunks();
+
+        if (  (viewerPosOld - viewerPos).sqrMagnitude 
+            > sqrViewerMoveThresholdForChunkUpdate
+        ) {
+            viewerPosOld = viewerPos;
+            updateVisibleChunks();
+        }
     }
 
     /*
@@ -132,7 +145,7 @@ public class EndlessTerrain : MonoBehaviour {
 
             lodMeshes = new LODMesh[detailLevels.Length];
             for (int i = 0; i < detailLevels.Length; i++) {
-                lodMeshes[i] = new LODMesh(detailLevels[i].lod);
+                lodMeshes[i] = new LODMesh(detailLevels[i].lod, UpdateTerrainChunk);
             }
 
             mapGenerator.RequestMapData(OnMapDataReceived);
@@ -141,6 +154,8 @@ public class EndlessTerrain : MonoBehaviour {
         void OnMapDataReceived(MapData mapData) {
             this.mapData = mapData;
             mapDataReceived = true;
+
+            UpdateTerrainChunk();
         }
 
         public void UpdateTerrainChunk() {
@@ -193,14 +208,18 @@ public class EndlessTerrain : MonoBehaviour {
         public bool hasRequestedMesh;
         public bool hasMesh;
         int lod;
+        System.Action updateCallback;
 
-        public LODMesh(int lod) {
+        public LODMesh(int lod, System.Action updateCallback) {
             this.lod = lod;
+            this.updateCallback = updateCallback;
         }
 
         void OnMeshDataReceived(MeshData meshData) {
             mesh = meshData.CreateMesh();
             hasMesh = true;
+
+            updateCallback();
         }
 
         public void RequestMesh(MapData mapData) {
