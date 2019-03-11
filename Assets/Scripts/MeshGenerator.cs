@@ -30,9 +30,10 @@ public static class MeshGenerator {
     public static MeshData GenerateTerrainMesh(
         float[,] heightMap,
         float heightMultiplier,
-        AnimationCurve heightCurve,
+        AnimationCurve _heightCurve,
         int levelOfDetail   // higher is simpler
     ) {
+        AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
         int width  = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
 
@@ -94,15 +95,15 @@ public static class MeshGenerator {
 
 public class MeshData {
     public Vector3[] vertices;
-    public int[] triangles;
+    public int[]     triangles;
     public Vector2[] uvs;
 
     int triangleIndex;
 
     public MeshData(int meshWidth, int meshHeight) {
-        vertices  = new Vector3[meshWidth * meshHeight];
-        uvs = new Vector2[meshWidth * meshHeight];
-        triangles = new int[(meshWidth - 1) * (meshHeight - 1) * 6];
+        vertices    = new Vector3[meshWidth * meshHeight];
+        uvs         = new Vector2[meshWidth * meshHeight];
+        triangles   = new int[(meshWidth - 1) * (meshHeight - 1) * 6];
     }
 
     public void AddTriangle(int a, int b, int c) {
