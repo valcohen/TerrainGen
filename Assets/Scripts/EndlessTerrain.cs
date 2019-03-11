@@ -12,6 +12,7 @@ public class EndlessTerrain : MonoBehaviour {
     int chunksVisibleInViewDistance;
 
     Dictionary<Vector2, TerrainChunk> terrainChunkDict = new Dictionary<Vector2, TerrainChunk>();
+    List<TerrainChunk> terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
 
     void Start() {
         chunkSize = MapGenerator.mapChunkSize - 1;
@@ -42,6 +43,12 @@ public class EndlessTerrain : MonoBehaviour {
      * +---------+---------+---------+---------+---------+
      */
     void updateVisibleChunks() {
+
+        for (int i = 0; i < terrainChunksVisibleLastUpdate.Count; i++) {
+            terrainChunksVisibleLastUpdate[i].SetVisible(false);
+        }
+        terrainChunksVisibleLastUpdate.Clear();
+
         int currentChunkCoordX = Mathf.RoundToInt(viewerPos.x / chunkSize);
         int currentChunkCoordY = Mathf.RoundToInt(viewerPos.y / chunkSize);
 
@@ -60,6 +67,11 @@ public class EndlessTerrain : MonoBehaviour {
 
                 if (terrainChunkDict.ContainsKey(viewedChunkCoord)) {
                     terrainChunkDict[viewedChunkCoord].UpdateTerrainChunk();
+                    if (terrainChunkDict[viewedChunkCoord].IsVisible()) {
+                        terrainChunksVisibleLastUpdate.Add(
+                            terrainChunkDict[viewedChunkCoord]
+                        );
+                    }
                 } else {
                     terrainChunkDict.Add(viewedChunkCoord, new TerrainChunk(
                         viewedChunkCoord, chunkSize
@@ -100,6 +112,10 @@ public class EndlessTerrain : MonoBehaviour {
 
         public void SetVisible(bool visible) {
             meshObject.SetActive(visible);
+        }
+
+        public bool IsVisible() {
+            return meshObject.activeSelf;
         }
     }
 
