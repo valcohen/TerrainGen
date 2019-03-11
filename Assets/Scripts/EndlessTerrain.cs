@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class EndlessTerrain : MonoBehaviour {
 
-    public const float maxViewDistance = 300;
+    public const float maxViewDistance = 450;
     public Transform viewer;
 
     public static Vector2 viewerPos;
@@ -74,7 +74,7 @@ public class EndlessTerrain : MonoBehaviour {
                     }
                 } else {
                     terrainChunkDict.Add(viewedChunkCoord, new TerrainChunk(
-                        viewedChunkCoord, chunkSize
+                        viewedChunkCoord, chunkSize, this.transform
                     )); 
                 }
 
@@ -90,7 +90,7 @@ public class EndlessTerrain : MonoBehaviour {
         Vector2 position;
         Bounds bounds;
 
-        public TerrainChunk(Vector2 coord, int size) {
+        public TerrainChunk(Vector2 coord, int size, Transform parent) {
             position = coord * size;
             bounds = new Bounds(position, Vector2.one * size);
             Vector3 positionV3 = new Vector3(position.x, 0, position.y);
@@ -98,6 +98,7 @@ public class EndlessTerrain : MonoBehaviour {
             meshObject = GameObject.CreatePrimitive(PrimitiveType.Plane);
             meshObject.transform.position = positionV3;
             meshObject.transform.localScale = Vector3.one * size / 10f; // Plane is 10*10 
+            meshObject.transform.parent = parent;
 
             SetVisible(false);
         }
