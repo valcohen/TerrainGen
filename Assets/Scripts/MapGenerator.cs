@@ -37,7 +37,7 @@ public class MapGenerator : MonoBehaviour {
      */
     public const int mapChunkSize = 241;
     [Range(0,6)]    // we'll multiply LOD by 2 to get increment - 2,4,6,..12
-    public int levelOfDetail;   // higher is simpler
+    public int editorPreviewLOD;   // higher is simpler
     public float noiseScale;    // TODO: "textureScale" for non-noise sources?
 
     public int octaves;
@@ -78,7 +78,7 @@ public class MapGenerator : MonoBehaviour {
             display.DrawMesh(
                 MeshGenerator.GenerateTerrainMesh(
                     mapData.heightMap, meshHeightMultiplier,
-                    meshHeightCurve, levelOfDetail
+                    meshHeightCurve, editorPreviewLOD
                 ),
                 TextureGenerator.TextureFromColorMap(
                     mapData.colorMap, mapChunkSize, mapChunkSize
@@ -104,20 +104,20 @@ public class MapGenerator : MonoBehaviour {
         }
     }
 
-    public void RequestMeshData(MapData mapData, Action<MeshData> callback) {
+    public void RequestMeshData(MapData mapData, int lod, Action<MeshData> callback) {
         ThreadStart threadStart = delegate {
-            MeshDataThread(mapData, callback);
+            MeshDataThread(mapData, lod, callback);
         };
 
         new Thread(threadStart).Start();
     }
 
-    void MeshDataThread(MapData mapData, Action<MeshData> callback) {
+    void MeshDataThread(MapData mapData, int lod, Action<MeshData> callback) {
         MeshData meshData = MeshGenerator.GenerateTerrainMesh(
             mapData.heightMap,
             meshHeightMultiplier,
             meshHeightCurve,
-            levelOfDetail
+            lod
         );
         lock (meshDataThreadInfoQueue) {
             meshDataThreadInfoQueue.Enqueue(
