@@ -33,7 +33,7 @@ public class MapGenerator : MonoBehaviour {
      * w = 241
      * w - 1 = 240  -- has factors of 2,4,6,8,10,12
      */
-    const int mapChunkSize = 241;
+    public const int mapChunkSize = 241;
     [Range(0,6)]    // we'll multiply LOD by 2 to get increment - 2,4,6,..12
     public int levelOfDetail;   // higher is simpler
     public float noiseScale;    // TODO: "textureScale" for non-noise sources?
