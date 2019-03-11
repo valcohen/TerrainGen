@@ -4,11 +4,18 @@ using UnityEngine;
 
 public class EndlessTerrain : MonoBehaviour {
 
-    public const float maxViewDistance = 450;
+    const float viewerMoveThresholdForChunkUpdate = 25f;
+    const float sqrViewerMoveThresholdForChunkUpdate = 
+        viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
+
+    public LODInfo[] detailLevels;
+    public static float maxViewDistance;
+
     public Transform viewer;
     public Material meshMaterial;
 
     public static Vector2 viewerPos;
+    Vector2 viewerPosOld;
     static MapGenerator mapGenerator;
     int chunkSize;
     int chunksVisibleInViewDistance;
@@ -18,15 +25,26 @@ public class EndlessTerrain : MonoBehaviour {
 
     void Start() {
         mapGenerator = FindObjectOfType<MapGenerator>();
+
+        // last elem in LOD array is least detailed
+        maxViewDistance = detailLevels[detailLevels.Length - 1].visibleDistanceThreshold;
         chunkSize = MapGenerator.mapChunkSize - 1;
         chunksVisibleInViewDistance = Mathf.RoundToInt(
             maxViewDistance / chunkSize
         );
+
+        updateVisibleChunks();
     }
 
     void Update() {
         viewerPos = new Vector2(viewer.position.x, viewer.position.z);
-        updateVisibleChunks();
+
+        if (  (viewerPosOld - viewerPos).sqrMagnitude 
+            > sqrViewerMoveThresholdForChunkUpdate
+        ) {
+            viewerPosOld = viewerPos;
+            updateVisibleChunks();
+        }
     }
 
     /*
@@ -77,7 +95,8 @@ public class EndlessTerrain : MonoBehaviour {
                     }
                 } else {
                     terrainChunkDict.Add(viewedChunkCoord, new TerrainChunk(
-                        viewedChunkCoord, chunkSize, this.transform, meshMaterial
+                        viewedChunkCoord, chunkSize, detailLevels, 
+                        this.transform, meshMaterial
                     )); 
                 }
 
@@ -93,12 +112,23 @@ public class EndlessTerrain : MonoBehaviour {
         Vector2     position;
         Bounds      bounds;
 
-        MapData     mapData;
-
         MeshRenderer meshRenderer;
         MeshFilter   meshFilter;
 
-        public TerrainChunk(Vector2 coord, int size, Transform parent, Material material) {
+        LODInfo[] detailLevels;
+        LODMesh[] lodMeshes;
+
+        MapData mapData;
+        bool mapDataReceived;
+
+        int previousLODIndex = -1;
+
+        public TerrainChunk(
+            Vector2 coord, int size, LODInfo[] detailLevels,
+            Transform parent, Material material
+        ) {
+            this.detailLevels = detailLevels;
+
             position = coord * size;
             bounds = new Bounds(position, Vector2.one * size);
             Vector3 positionV3 = new Vector3(position.x, 0, position.y);
@@ -113,21 +143,59 @@ public class EndlessTerrain : MonoBehaviour {
 
             SetVisible(false);
 
-            mapGenerator.RequestMapData(OnMapDataReceived);
+            lodMeshes = new LODMesh[detailLevels.Length];
+            for (int i = 0; i < detailLevels.Length; i++) {
+                lodMeshes[i] = new LODMesh(detailLevels[i].lod, UpdateTerrainChunk);
+            }
+
+            mapGenerator.RequestMapData(position, OnMapDataReceived);
         }
 
         void OnMapDataReceived(MapData mapData) {
-            mapGenerator.RequestMeshData(mapData, OnMeshDataReceived);
-        }
+            this.mapData = mapData;
+            mapDataReceived = true;
 
-        void OnMeshDataReceived(MeshData meshData) {
-            meshFilter.mesh = meshData.CreateMesh();
+            Texture2D texture = TextureGenerator.TextureFromColorMap(
+                mapData.colorMap,
+                MapGenerator.mapChunkSize, MapGenerator.mapChunkSize
+            );
+            meshRenderer.material.mainTexture = texture;
+
+            UpdateTerrainChunk();
         }
 
         public void UpdateTerrainChunk() {
+            if (!mapDataReceived) { return; }
+
             float viewerDistFromNearestEdge = 
                 Mathf.Sqrt(bounds.SqrDistance(viewerPos));
             bool visible = viewerDistFromNearestEdge <= maxViewDistance;
+
+            if (visible) {
+                int lodIndex = 0;
+
+                // don't need to look at final elem as visible will be false,
+                // viewerDistFromNearestEdge will be > maxViewDistance
+                for (int i = 0; i < detailLevels.Length - 1; i++) {
+                    if (  viewerDistFromNearestEdge 
+                        > detailLevels[i].visibleDistanceThreshold
+                    ) {
+                        lodIndex = i + 1; 
+                    } else {
+                        break;
+                    }
+                }
+
+                if (lodIndex != previousLODIndex) {
+                    LODMesh lodMesh = lodMeshes[lodIndex];
+                    if (lodMesh.hasMesh) {
+                        previousLODIndex = lodIndex;
+                        meshFilter.mesh = lodMesh.mesh;
+                    } else if (! lodMesh.hasRequestedMesh) {
+                        lodMesh.RequestMesh(mapData);
+                    }
+                }
+            }
 
             SetVisible(visible);
         }
@@ -141,4 +209,34 @@ public class EndlessTerrain : MonoBehaviour {
         }
     }
 
+    class LODMesh {
+        public Mesh mesh;
+        public bool hasRequestedMesh;
+        public bool hasMesh;
+        int lod;
+        System.Action updateCallback;
+
+        public LODMesh(int lod, System.Action updateCallback) {
+            this.lod = lod;
+            this.updateCallback = updateCallback;
+        }
+
+        void OnMeshDataReceived(MeshData meshData) {
+            mesh = meshData.CreateMesh();
+            hasMesh = true;
+
+            updateCallback();
+        }
+
+        public void RequestMesh(MapData mapData) {
+            hasRequestedMesh = true;
+            mapGenerator.RequestMeshData(mapData, lod, OnMeshDataReceived);
+        }
+    }
+
+    [System.Serializable]
+    public struct LODInfo {
+        public int lod;
+        public float visibleDistanceThreshold;
+    }
 }
