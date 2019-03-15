@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class MapGenerator : MonoBehaviour {
 
-    public enum DrawMode { NoiseMap, ColorMap, Mesh };
+    public enum DrawMode { NoiseMap, ColorMap, Mesh, FalloffMap };
     public DrawMode drawMode;
 
     public Noise.NormalizeMode normalizeMode;
@@ -86,6 +86,11 @@ public class MapGenerator : MonoBehaviour {
                     mapData.colorMap, mapChunkSize, mapChunkSize
                 )
             );
+        }
+        else if (drawMode == DrawMode.FalloffMap) {
+            display.DrawTexture(TextureGenerator.TextureFromHeightMap(
+                FalloffGenerator.GenerateFalloffMap(mapChunkSize))
+           );
         }
     }
 
