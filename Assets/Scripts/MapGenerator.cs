@@ -37,7 +37,7 @@ public class MapGenerator : MonoBehaviour {
      * w = 241
      * w - 1 = 240  -- has factors of 2,4,6,8,10,12
      */
-    public const int mapChunkSize = 241;
+    public const int mapChunkSize = 239; // + 2 borders = 241
     [Range(0,6)]    // we'll multiply LOD by 2 to get increment - 2,4,6,..12
     public int editorPreviewLOD;   // higher is simpler
     public float noiseScale;    // TODO: "textureScale" for non-noise sources?
@@ -161,8 +161,9 @@ public class MapGenerator : MonoBehaviour {
 
     MapData GenerateMapData(Vector2 center) {
         float[,] noiseMap = Noise.GenerateNoiseMap(
-            mapChunkSize, mapChunkSize, seed, noiseScale,
-            octaves, persistence, lacunarity, center + offset, normalizeMode
+            mapChunkSize + 2 /* borders */, mapChunkSize + 2 /* borders */, 
+            seed, noiseScale, octaves, persistence, lacunarity, 
+            center + offset, normalizeMode
         );
 
         Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
