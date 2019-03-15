@@ -13,10 +13,23 @@ public static class FalloffGenerator {
 
                 // of x,y, which is closest to edge of square?
                 float value = Mathf.Max(Mathf.Abs(x), Mathf.Abs(y));
-                map[i, j] = value;
+                map[i, j] = Evaluate(value);
             }
         }
 
         return map;
+    }
+
+    /*
+     *               x^a                  __
+     *  f(x) = ----------------   =      /
+     *         x^a + (b - bx)^a      ___/
+     */
+    static float Evaluate (float value) {
+        float a = 3;
+        float b = 2.2f;
+
+        return  Mathf.Pow(value, a) /
+               (Mathf.Pow(value, a) + Mathf.Pow(b - b * value, a));
     }
 }
