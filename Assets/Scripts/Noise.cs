@@ -72,7 +72,6 @@ public static class Noise {
             }
         }
 
-        float fudgeFactor = 1.5f;
         for (int y = 0; y < mapHeight; y++) {
             for (int x = 0; x < mapWidth; x++) {
                 if (normalizeMode == NormalizeMode.Local) {
@@ -83,10 +82,8 @@ public static class Noise {
                 } else {
                     // estimate min/max NoiseHeight across multiple chunks
                     float normalizedHeight = (noiseMap[x, y] + 1)
-                        / (2f * maxPossibleHeight / fudgeFactor);
+                        / (2f * maxPossibleHeight);
                     // reverse (sample * 2 - 1) op that gave negative values 
-                    // fudgFactor accounts for actual noise values 
-                    // not coming close to maxPossibleHeight
 
                     noiseMap[x, y] = Mathf.Clamp(normalizedHeight, 0, int.MaxValue);
                 }
