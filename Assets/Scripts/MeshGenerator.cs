@@ -35,6 +35,10 @@ public static class MeshGenerator {
     ) {
         AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
 
+        int meshSimplificationIncrement = levelOfDetail == 0
+                                        ? 1
+                                        : levelOfDetail * 2;
+
         /*
          *     -1   -2   -3   -4   -5   -n : border vertices
          * 
@@ -52,7 +56,8 @@ public static class MeshGenerator {
          */
 
         int borderedSize  = heightMap.GetLength(0);
-        int meshSize = borderedSize - 2;
+        int meshSize = borderedSize - 2 * meshSimplificationIncrement;
+        int meshSizeUnsimplified = borderedSize - 2;
 
         /*
          * center the mesh on the screen:
@@ -63,12 +68,9 @@ public static class MeshGenerator {
          *  x = ----------- y = -----------
          *          -2               2
          */
-        float topLeftX = (meshSize - 1) / -2f;
-        float topLeftZ = (meshSize - 1) / +2f;
+        float topLeftX = (meshSizeUnsimplified - 1) / -2f;
+        float topLeftZ = (meshSizeUnsimplified - 1) / +2f;
 
-        int meshSimplificationIncrement = levelOfDetail == 0
-                                        ? 1
-                                        : levelOfDetail * 2;
         int verticesPerLine = (meshSize - 1) / meshSimplificationIncrement + 1;
 
         MeshData meshData = new MeshData(verticesPerLine);
@@ -111,9 +113,9 @@ public static class MeshGenerator {
 
                 float height = heightCurve.Evaluate(heightMap[x, y]) * heightMultiplier;
                 Vector3 vertexPosition = new Vector3(
-                    topLeftX + percent.x * meshSize, 
+                    topLeftX + percent.x * meshSizeUnsimplified, 
                     height, 
-                    topLeftZ - percent.y * meshSize
+                    topLeftZ - percent.y * meshSizeUnsimplified
                 );
 
                 meshData.AddVertex(vertexPosition, percent, vertexIndex);
