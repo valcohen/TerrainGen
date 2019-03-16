@@ -36,8 +36,16 @@ public class MapGenerator : MonoBehaviour {
      * since i must be a factor of w-1, 
      * w = 241
      * w - 1 = 240  -- has factors of 2,4,6,8,10,12
+     * 
+     * WHen flat shading, we need more vertices, so we have to 
+     * reduce the chunk size. The next best width is
+     * w = 97
+     * w - 1 = 96   -- has factors of 2,4,6,8,12
      */
-    public const int mapChunkSize = 239; // + 2 borders = 241
+    public const int mapChunkSize = 95; // + 2 = 97 // 239; // + 2 borders = 241
+
+    public bool useFlatShading;
+
     [Range(0,6)]    // we'll multiply LOD by 2 to get increment - 2,4,6,..12
     public int editorPreviewLOD;   // higher is simpler
     public float noiseScale;    // TODO: "textureScale" for non-noise sources?
@@ -88,7 +96,7 @@ public class MapGenerator : MonoBehaviour {
             display.DrawMesh(
                 MeshGenerator.GenerateTerrainMesh(
                     mapData.heightMap, meshHeightMultiplier,
-                    meshHeightCurve, editorPreviewLOD
+                    meshHeightCurve, editorPreviewLOD, useFlatShading
                 ),
                 TextureGenerator.TextureFromColorMap(
                     mapData.colorMap, mapChunkSize, mapChunkSize
@@ -129,10 +137,8 @@ public class MapGenerator : MonoBehaviour {
 
     void MeshDataThread(MapData mapData, int lod, Action<MeshData> callback) {
         MeshData meshData = MeshGenerator.GenerateTerrainMesh(
-            mapData.heightMap,
-            meshHeightMultiplier,
-            meshHeightCurve,
-            lod
+            mapData.heightMap, meshHeightMultiplier, meshHeightCurve,
+            lod, useFlatShading
         );
         lock (meshDataThreadInfoQueue) {
             meshDataThreadInfoQueue.Enqueue(
