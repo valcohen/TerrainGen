@@ -11,39 +11,6 @@ public class MapGenerator : MonoBehaviour {
 
     public Noise.NormalizeMode normalizeMode;
 
-    /*
-     * Set chunk width to support multiple mesh LOD 
-     * w = width, i = increment
-     *
-     * w = 9:  0  1  2  3  4  5  6  7  8
-     * i = 1:  *  *  *  *  *  *  *  *  *   8 vertices
-     * 1 = 2:  *     *     *     *     *   5
-     * 1 = 4:  *           *           *   3
-     *
-     * i = factor of (w-1)
-     * i = 1,2,4,8
-     *
-     * number of vertices per line:
-     *
-     *      (w-1) 
-     * v =  ----- + 1
-     *        i
-     *
-     * v = w * h            -- if i = 1, total verts v in mesh
-     * v <= 255^2 (65025)   -- unity limit on verts in a mesh
-     * w <= 255             -- msx width of square mesh
-     * 
-     * since i must be a factor of w-1, 
-     * w = 241
-     * w - 1 = 240  -- has factors of 2,4,6,8,10,12
-     * 
-     * WHen flat shading, we need more vertices, so we have to 
-     * reduce the chunk size. The next best width is
-     * w = 97
-     * w - 1 = 96   -- has factors of 2,4,6,8,12
-     */
-    public const int mapChunkSize = 95; // + 2 = 97 // 239; // + 2 borders = 241
-
     public bool useFlatShading;
 
     [Range(0,6)]    // we'll multiply LOD by 2 to get increment - 2,4,6,..12
@@ -66,6 +33,7 @@ public class MapGenerator : MonoBehaviour {
     public bool autoUpdate;
 
     public TerrainType[] regions;
+    static MapGenerator instance;
 
     float[,] falloffMap;
 
@@ -76,6 +44,50 @@ public class MapGenerator : MonoBehaviour {
 
     void Awake() {
         falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
+    }
+
+    /*
+     * Set chunk width to support multiple mesh LOD 
+     * w = width, i = increment
+     *
+     * w = 9:  0  1  2  3  4  5  6  7  8
+     * i = 1:  *  *  *  *  *  *  *  *  *   8 vertices
+     * 1 = 2:  *     *     *     *     *   5
+     * 1 = 4:  *           *           *   3
+     *
+     * i = factor of (w-1)
+     * i = 1,2,4,8
+     *
+     * number of vertices per line:
+     *
+     *      (w-1) 
+     * v =  ----- + 1
+     *        i
+     *
+     * v = w * h            -- if i = 1, total verts v in mesh
+     * v <= 255^2 (65025)   -- unity limit on verts in a mesh
+     * w <= 255             -- max width of square mesh
+     * 
+     * since i must be a factor of w-1, 
+     * w = 241
+     * w - 1 = 240  -- has factors of 2,4,6,8,10,12
+     * 
+     * WHen flat shading, we need more vertices, so we have to 
+     * reduce the chunk size. The next best width is
+     * w = 97
+     * w - 1 = 96   -- has factors of 2,4,6,8,12
+     */
+    public static int mapChunkSize {
+        get {
+            if (instance == null) {
+                instance = FindObjectOfType<MapGenerator>();
+            }
+            if (instance.useFlatShading) {
+                return 95;  // + 2 borders = 97
+            } else {
+                return 239; // + 2 borders = 241
+            }
+        }
     }
 
     public void DrawMapInEditor() {
