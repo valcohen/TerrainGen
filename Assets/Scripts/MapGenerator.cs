@@ -11,6 +11,9 @@ public class MapGenerator : MonoBehaviour {
 
     public TerrainData  terrainData;
     public NoiseData    noiseData;
+    public TextureData  textureData;
+
+    public Material     terrainMaterial;
 
     [Range(0,6)]    // we'll multiply LOD by 2 to get increment - 2,4,6,..12
     public int editorPreviewLOD;   // higher is simpler
@@ -28,6 +31,10 @@ public class MapGenerator : MonoBehaviour {
         if (!Application.isPlaying) {   // TODO: investigate if_unity_editor directive
             DrawMapInEditor();
         }
+    }
+
+    void OnTextureValuesUpdated() {
+        textureData.ApplyToMaterial(terrainMaterial);
     }
 
     /*
@@ -181,6 +188,10 @@ public class MapGenerator : MonoBehaviour {
         if (noiseData != null) {
             noiseData.OnValuesUpdated -= OnValuesUpdated;
             noiseData.OnValuesUpdated += OnValuesUpdated;
+        }
+        if (textureData != null) {
+            textureData.OnValuesUpdated -= OnTextureValuesUpdated;
+            textureData.OnValuesUpdated += OnTextureValuesUpdated;
         }
     }
 
