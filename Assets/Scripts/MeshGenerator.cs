@@ -145,7 +145,7 @@ public static class MeshGenerator {
             }
         }
 
-        meshData.Finalize();
+        meshData.FinalizeNormals();
 
         return meshData;
     }
@@ -262,7 +262,7 @@ public class MeshData {
         return Vector3.Cross(sideAB, sideAC).normalized;
     }
 
-    public void Finalize() {
+    public void FinalizeNormals() {
         if ( useFlatShading ) {
             FlatShading();
         } else {
