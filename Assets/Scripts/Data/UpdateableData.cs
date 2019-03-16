@@ -9,11 +9,15 @@ public class UpdateableData : ScriptableObject {
 
     protected virtual void OnValidate() {
         if (autoUpdate) {
-            NotifyOfUpdatedValues();
+            // delay updating min/maxMeshHeight until after both the scripts 
+            // *and* the shader compile, or else the values get dropped when the
+            // shader compiles.
+            UnityEditor.EditorApplication.update += NotifyOfUpdatedValues;
         }
     }
 
     public void NotifyOfUpdatedValues() {
+        UnityEditor.EditorApplication.update -= NotifyOfUpdatedValues;
         if (OnValuesUpdated != null) {
             OnValuesUpdated();
         }

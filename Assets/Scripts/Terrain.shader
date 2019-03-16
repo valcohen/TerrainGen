@@ -23,7 +23,6 @@
             return saturate((value-a)/(b-a));  // clamp to 0..1
         }
 
-
 		void surf (Input IN, inout SurfaceOutputStandard o) {
 
             float heightPct = inverseLerp(minHeight, maxHeight, IN.worldPos.y);
