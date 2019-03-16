@@ -24,10 +24,6 @@ public class MapGenerator : MonoBehaviour {
     Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue =
         new Queue<MapThreadInfo<MeshData>>();
 
-    void Awake() {
-        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
-    }
-
     void OnValuesUpdated() {
         if (!Application.isPlaying) {   // TODO: investigate if_unity_editor directive
             DrawMapInEditor();
@@ -163,13 +159,16 @@ public class MapGenerator : MonoBehaviour {
             center + noiseData.offset, noiseData.normalizeMode
         );
 
-        for (int y = 0; y < mapChunkSize; y++) {
-            for (int x = 0; x < mapChunkSize; x++) {
-                if (terrainData.useFalloff) {
+        if (terrainData.useFalloff) {
+            if (falloffMap == null) {
+                falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize + 2);
+            }
+            for (int y = 0; y < mapChunkSize+ 2; y++) {
+                for (int x = 0; x < mapChunkSize + 2; x++) {
                     noiseMap[x, y] = Mathf.Clamp01(noiseMap[x, y] - falloffMap[x, y]);
-                }            }
+                }
+            }
         }
-
         return new MapData(noiseMap);
     }
 
@@ -183,8 +182,6 @@ public class MapGenerator : MonoBehaviour {
             noiseData.OnValuesUpdated -= OnValuesUpdated;
             noiseData.OnValuesUpdated += OnValuesUpdated;
         }
-
-        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
     }
 
     struct MapThreadInfo<T> {
