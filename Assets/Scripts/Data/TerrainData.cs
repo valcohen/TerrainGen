@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [CreateAssetMenu]
-public class TerrainData : ScriptableObject {
+public class TerrainData : UpdateableData {
 
     public bool useFlatShading;
     public bool useFalloff;

@@ -31,6 +31,12 @@ public class MapGenerator : MonoBehaviour {
         falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
     }
 
+    void OnValuesUpdated() {
+        if (!Application.isPlaying) {   // TODO: investigate if_unity_editor directive
+            DrawMapInEditor();
+        }
+    }
+
     /*
      * Set chunk width to support multiple mesh LOD 
      * w = width, i = increment
@@ -192,6 +198,16 @@ public class MapGenerator : MonoBehaviour {
     }
 
     void OnValidate() {
+
+        if (terrainData != null) {
+            terrainData.OnValuesUpdated -= OnValuesUpdated; // there can be 
+            terrainData.OnValuesUpdated += OnValuesUpdated; // only one!
+        }
+        if (noiseData != null) {
+            noiseData.OnValuesUpdated -= OnValuesUpdated;
+            noiseData.OnValuesUpdated += OnValuesUpdated;
+        }
+
         falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
     }
 
