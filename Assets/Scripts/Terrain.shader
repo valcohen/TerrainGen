@@ -30,6 +30,7 @@
 
         struct Input {
 			float3 worldPos;
+            float3 worldNormal;
 		};
 
         float inverseLerp(float a, float b, float value) {
@@ -51,15 +52,17 @@
                 o.Albedo = o.Albedo * (1-drawStrength) // prevent black if drawStrength == 0
                          + baseColors[i] * drawStrength;
 
-                /*
-                 *        y
-                 *        | 
-                 *       /|\
-                 *      |\ /|
-                 *      |x|z|
-                 *       \|/
-                 */
-                o.Albedo = tex2D(testTexture, IN.worldPos.xz / testScale);
+                // triplanar mapping
+                float3 scaledWorldPos = IN.worldPos / testScale;
+                float3 blendAxes = abs(IN.worldNormal); // normals are 0..1 away..facing
+                // ensure blendAxes.x + y + z = 1 to prevent overbrightness 
+                // if any one channel exceeds 1
+                blendAxes /= blendAxes.x + blendAxes.y + blendAxes.z;   
+                float3 xProjection = tex2D(testTexture, scaledWorldPos.yz) * blendAxes.x;
+                float3 yProjection = tex2D(testTexture, scaledWorldPos.xz) * blendAxes.y;
+                float3 zProjection = tex2D(testTexture, scaledWorldPos.xy) * blendAxes.z;
+
+                o.Albedo = xProjection + yProjection + zProjection;
             }
         }
 		ENDCG
