@@ -1,5 +1,7 @@
 ﻿Shader "Custom/Terrain" {
 	Properties {
+        testTexture("Texture", 2D) = "white"{}
+        testScale("Scale", Float) = 1
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
@@ -23,6 +25,9 @@
         float minHeight;
         float maxHeight;
 
+        sampler2D testTexture;
+        float testScale;
+
         struct Input {
 			float3 worldPos;
 		};
@@ -45,6 +50,16 @@
                 );
                 o.Albedo = o.Albedo * (1-drawStrength) // prevent black if drawStrength == 0
                          + baseColors[i] * drawStrength;
+
+                /*
+                 *        y
+                 *        | 
+                 *       /|\
+                 *      |\ /|
+                 *      |x|z|
+                 *       \|/
+                 */
+                o.Albedo = tex2D(testTexture, IN.worldPos.xz / testScale);
             }
         }
 		ENDCG
