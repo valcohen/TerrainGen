@@ -39,7 +39,6 @@
                 o.Albedo = o.Albedo * (1-drawStrength) // prevent black if drawStrength == 0
                          + baseColors[i] * drawStrength;
             }
-
         }
 		ENDCG
 	}
