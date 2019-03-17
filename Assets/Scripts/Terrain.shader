@@ -14,13 +14,15 @@
 		// Use shader model 3.0 target, to get nicer looking lighting
 		#pragma target 3.0
 
-        const static int maxColorCount = 8;
-        const static float epsilon = 1E-4;  // add to avoid divide-by-zero errors
+        const static int    maxLayerCount = 8;
+        const static float  epsilon = 1E-4;  // add to avoid divide-by-zero errors
 
-        int     baseColorCount;
-        float3  baseColors[maxColorCount];
-        float   baseStartHeights[maxColorCount];
-        float   baseBlends[maxColorCount];
+        int     layerCount;
+        float3  baseColors[maxLayerCount];
+        float   baseStartHeights[maxLayerCount];
+        float   baseBlends[maxLayerCount];
+        float   baseColorStrength[maxLayerCount];
+        float   baseTextureScales[maxLayerCount];
 
         float minHeight;
         float maxHeight;
@@ -41,7 +43,7 @@
 
             float heightPct = inverseLerp(minHeight, maxHeight, IN.worldPos.y);
 
-            for (int i = 0; i < baseColorCount; i++) {
+            for (int i = 0; i < layerCount; i++) {
                 // 0 when pixel is 1/2 the base blend's value below start height,
                 // 1 when pixel is 1/2 thr base blend's value above start height
                 float drawStrength = inverseLerp(
@@ -62,7 +64,7 @@
                 float3 yProjection = tex2D(testTexture, scaledWorldPos.xz) * blendAxes.y;
                 float3 zProjection = tex2D(testTexture, scaledWorldPos.xy) * blendAxes.z;
 
-                o.Albedo = xProjection + yProjection + zProjection;
+                // o.Albedo = xProjection + yProjection + zProjection;
             }
         }
 		ENDCG
