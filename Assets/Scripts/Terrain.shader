@@ -13,10 +13,12 @@
 		#pragma target 3.0
 
         const static int maxColorCount = 8;
+        const static float epsilon = 1E-4;  // add to avoid divide-by-zero errors
 
         int     baseColorCount;
         float3  baseColors[maxColorCount];
         float   baseStartHeights[maxColorCount];
+        float   baseBlends[maxColorCount];
 
         float minHeight;
         float maxHeight;
@@ -34,8 +36,13 @@
             float heightPct = inverseLerp(minHeight, maxHeight, IN.worldPos.y);
 
             for (int i = 0; i < baseColorCount; i++) {
-                // sign returns -1 or 1; saturate clamps -1 to 0
-                float drawStrength = saturate(sign(heightPct - baseStartHeights[i]));
+                // 0 when pixel is 1/2 the base blend's value below start height,
+                // 1 when pixel is 1/2 thr base blend's value above start height
+                float drawStrength = inverseLerp(
+                    -baseBlends[i]/2 - epsilon,
+                    baseBlends[i]/2, 
+                    (heightPct - baseStartHeights[i])
+                );
                 o.Albedo = o.Albedo * (1-drawStrength) // prevent black if drawStrength == 0
                          + baseColors[i] * drawStrength;
             }
