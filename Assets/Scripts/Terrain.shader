@@ -12,6 +12,12 @@
 		// Use shader model 3.0 target, to get nicer looking lighting
 		#pragma target 3.0
 
+        const static int maxColorCount = 8;
+
+        int     baseColorCount;
+        float3  baseColors[maxColorCount];
+        float   baseStartHeights[maxColorCount];
+
         float minHeight;
         float maxHeight;
 
@@ -26,7 +32,14 @@
 		void surf (Input IN, inout SurfaceOutputStandard o) {
 
             float heightPct = inverseLerp(minHeight, maxHeight, IN.worldPos.y);
-            o.Albedo = heightPct;
+
+            for (int i = 0; i < baseColorCount; i++) {
+                // sign returns -1 or 1; saturate clamps -1 to 0
+                float drawStrength = saturate(sign(heightPct - baseStartHeights[i]));
+                o.Albedo = o.Albedo * (1-drawStrength) // prevent black if drawStrength == 0
+                         + baseColors[i] * drawStrength;
+            }
+
         }
 		ENDCG
 	}
