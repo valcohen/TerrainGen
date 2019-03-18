@@ -27,6 +27,30 @@ using UnityEngine;
 
 public static class MeshGenerator {
 
+    public const int numSupportedLODs = 5;
+    public const int numSupportedChunkSizes = 9;
+    public const int numSupportedFlatShadedChunkSizes = 3;
+
+    /*
+     * chunk sizes that are divisibe by the increment
+     * and whose square < 65K (Unity limit on triangles in a mesh):
+     * 
+     *  def legal(n):
+     *      for i in range(2, 10, 2):
+     *          return n%i == 0
+     * 
+     *  for i in range(241):
+     *      if legal(i): print i
+     * 
+     *  8, 24, 48, 72, 96, 120, 144, 168, 192, 216, 240
+     */
+    public static readonly int[] supportedChunkSizes = {
+        48, 72, 96, 120, 144, 168, 192, 216, 240
+    };
+    public static readonly int[] supportedFlatShadedChunkSizes = {
+        48, 72, 96
+    };
+
     public static MeshData GenerateTerrainMesh(
         float[,]        heightMap,
         float           heightMultiplier,
