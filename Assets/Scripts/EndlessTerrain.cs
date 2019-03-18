@@ -23,7 +23,7 @@ public class EndlessTerrain : MonoBehaviour {
     int chunksVisibleInViewDistance;
 
     Dictionary<Vector2, TerrainChunk> terrainChunkDict = new Dictionary<Vector2, TerrainChunk>();
-    static List<TerrainChunk> terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
+    static List<TerrainChunk> visibleTerrainChunks = new List<TerrainChunk>();
 
     void Start() {
         mapGenerator = FindObjectOfType<MapGenerator>();
@@ -43,7 +43,7 @@ public class EndlessTerrain : MonoBehaviour {
             mapGenerator.terrainData.uniformScale;
 
         if (viewerPos != viewerPosOld) {
-            foreach (var chunk in terrainChunksVisibleLastUpdate) {
+            foreach (var chunk in visibleTerrainChunks) {
                 chunk.UpdateCollisionMesh();
             }
         }
@@ -73,11 +73,12 @@ public class EndlessTerrain : MonoBehaviour {
      * +---------+---------+---------+---------+---------+
      */
     void UpdateVisibleChunks() {
+        HashSet<Vector2> alreadyUpdatedChunkCoords = new HashSet<Vector2>();
 
-        for (int i = 0; i < terrainChunksVisibleLastUpdate.Count; i++) {
-            terrainChunksVisibleLastUpdate[i].SetVisible(false);
+        for (int i = visibleTerrainChunks.Count - 1; i >= 0; i--) {
+            alreadyUpdatedChunkCoords.Add(visibleTerrainChunks[i].coord);
+            visibleTerrainChunks[i].UpdateTerrainChunk();
         }
-        terrainChunksVisibleLastUpdate.Clear();
 
         int currentChunkCoordX = Mathf.RoundToInt(viewerPos.x / chunkSize);
         int currentChunkCoordY = Mathf.RoundToInt(viewerPos.y / chunkSize);
@@ -94,14 +95,16 @@ public class EndlessTerrain : MonoBehaviour {
                     currentChunkCoordX + xOffset,
                     currentChunkCoordY + yOffset
                 );
-
-                if (terrainChunkDict.ContainsKey(viewedChunkCoord)) {
-                    terrainChunkDict[viewedChunkCoord].UpdateTerrainChunk();
-                } else {
-                    terrainChunkDict.Add(viewedChunkCoord, new TerrainChunk(
-                        viewedChunkCoord, chunkSize, detailLevels, colliderLODIndex, 
-                        this.transform, meshMaterial
-                    )); 
+                if (!alreadyUpdatedChunkCoords.Contains(viewedChunkCoord)) {
+                    if (terrainChunkDict.ContainsKey(viewedChunkCoord)) {
+                        terrainChunkDict[viewedChunkCoord].UpdateTerrainChunk();
+                    }
+                    else {
+                        terrainChunkDict.Add(viewedChunkCoord, new TerrainChunk(
+                            viewedChunkCoord, chunkSize, detailLevels, colliderLODIndex,
+                            this.transform, meshMaterial
+                        ));
+                    }
                 }
 
             }
@@ -111,6 +114,8 @@ public class EndlessTerrain : MonoBehaviour {
     }
 
     public class TerrainChunk {
+
+        public Vector2 coord;
 
         GameObject meshObject;
         Vector2 position;
@@ -134,6 +139,7 @@ public class EndlessTerrain : MonoBehaviour {
             Vector2 coord, int size, LODInfo[] detailLevels, int colliderLODIndex,
             Transform parent, Material material
         ) {
+            this.coord = coord;
             this.detailLevels = detailLevels;
             this.colliderLODIndex = colliderLODIndex;
 
@@ -179,6 +185,7 @@ public class EndlessTerrain : MonoBehaviour {
 
             float viewerDistFromNearestEdge =
                 Mathf.Sqrt(bounds.SqrDistance(viewerPos));
+            bool wasVisible = IsVisible();
             bool visible = viewerDistFromNearestEdge <= maxViewDistance;
 
             if (visible) {
@@ -208,10 +215,16 @@ public class EndlessTerrain : MonoBehaviour {
                     }
                 }
 
-                terrainChunksVisibleLastUpdate.Add(this);
+                visibleTerrainChunks.Add(this);
             }
-
-            SetVisible(visible);
+            if (wasVisible != visible) {
+                if (visible) {
+                    visibleTerrainChunks.Add(this);
+                } else {
+                    visibleTerrainChunks.Remove(this);
+                }
+                SetVisible(visible);
+            }
         }
 
         public void UpdateCollisionMesh() {
