@@ -7,6 +7,8 @@ public class UpdateableData : ScriptableObject {
     public event System.Action OnValuesUpdated;
     public bool autoUpdate;
 
+#if UNITY_EDITOR
+
     protected virtual void OnValidate() {
         if (autoUpdate) {
             // delay updating min/maxMeshHeight until after both the scripts 
@@ -22,4 +24,6 @@ public class UpdateableData : ScriptableObject {
             OnValuesUpdated();
         }
     }
+
+#endif
 }

@@ -15,7 +15,13 @@ public class MapGenerator : MonoBehaviour {
 
     public Material     terrainMaterial;
 
-    [Range(0,6)]    // we'll multiply LOD by 2 to get increment - 2,4,6,..12
+    [Range(0, MeshGenerator.numSupportedChunkSizes - 1)]
+    public int chunkSizeIndex;
+    [Range(0, MeshGenerator.numSupportedFlatShadedChunkSizes- 1)]
+    public int flatShadedChunkSizeIndex;
+
+    // we'll multiply LOD by 2 to get increment - 2,4,6,..12
+    [Range(0, MeshGenerator.numSupportedLODs - 1)]
     public int editorPreviewLOD;   // higher is simpler
 
     public bool autoUpdate;
@@ -26,6 +32,12 @@ public class MapGenerator : MonoBehaviour {
         new Queue<MapThreadInfo<MapData>>();
     Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue =
         new Queue<MapThreadInfo<MeshData>>();
+
+    void Awake() {
+        textureData.ApplyToMaterial(terrainMaterial);
+        textureData.UpdateMeshHeights(
+            terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
+    }
 
     void OnValuesUpdated() {
         if (!Application.isPlaying) {   // TODO: investigate if_unity_editor directive
@@ -63,7 +75,7 @@ public class MapGenerator : MonoBehaviour {
      * w = 241
      * w - 1 = 240  -- has factors of 2,4,6,8,10,12
      * 
-     * WHen flat shading, we need more vertices, so we have to 
+     * When flat shading, we need more vertices, so we have to 
      * reduce the chunk size. The next best width is
      * w = 97
      * w - 1 = 96   -- has factors of 2,4,6,8,12
@@ -71,17 +83,18 @@ public class MapGenerator : MonoBehaviour {
     public int mapChunkSize {
         get {
             if (terrainData.useFlatShading) {
-                return 95;  // + 2 borders = 97
+                return MeshGenerator.supportedFlatShadedChunkSizes[
+                    flatShadedChunkSizeIndex] - 1;  // + 2 borders
             } else {
-                return 239; // + 2 borders = 241
+                return MeshGenerator.supportedChunkSizes[chunkSizeIndex] - 1;  // + 2 borders
             }
         }
     }
 
     public void DrawMapInEditor() {
-        MapData mapData = GenerateMapData(Vector2.zero);
         textureData.UpdateMeshHeights(
             terrainMaterial, terrainData.minHeight, terrainData.maxHeight);
+        MapData mapData = GenerateMapData(Vector2.zero);
 
         MapDisplay display = FindObjectOfType<MapDisplay>();
         if (drawMode == DrawMode.NoiseMap) {
